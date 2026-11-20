@@ -94,6 +94,11 @@ export const backend = {
     deepMerge(db.profile, patch);
     notify('profile');
   },
+  // No notifications in the demo: there is no account for a scheduled task to read.
+  async pushToken() { return null; },
+  async dropPushToken() {},
+  async savePushPlan() {},
+  async removePushDevice() {},
 
   async createRun(uid, data) {
     const id = `run-${Date.now().toString(36)}`;

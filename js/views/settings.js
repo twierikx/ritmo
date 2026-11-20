@@ -4,6 +4,7 @@ import { mondayOf, longDate, addDays, sequenceOf, diffDays, todayStr } from '../
 import { programs } from '../programs/index.js';
 import { icon } from '../icons.js';
 import { esc, on, onChange, openSheet, closeSheet, refreshSheet, toast, confirmSheet, prefs } from '../ui.js';
+import { pushSupported, pushDenied, pushOnHere, enablePush, disablePush } from '../push.js';
 
 export function loadPrefs() {
   try { Object.assign(prefs, JSON.parse(localStorage.getItem('ritmo-prefs') || '{}')); } catch { /* ignore */ }
@@ -63,6 +64,8 @@ export function openSettings() {
           ${toggle('vibrate', 'Trillen')}
         </section>
 
+        ${pushSection()}
+
         <section>
           <h3>Je gegevens</h3>
           <p class="hint">${state.backend.demo ? 'Dit is de proefversie: alles staat alleen in deze browser.' : `Ingelogd als ${esc(state.user.email || state.user.name)}. Alleen jij kunt je gegevens zien.`}</p>
@@ -88,6 +91,43 @@ export function openSettings() {
     },
   });
 }
+
+let pushBusy = false;
+function pushSection() {
+  const what = '<p class="hint">Rond 8 uur zie je wat er die dag op je schema staat. Rond 20 uur krijg je alleen een melding als er nog iets openstaat, of als je Ritmo die dag nog niet hebt geopend.</p>';
+  let body;
+  if (state.backend.demo) body = '<p class="hint">In de proefversie werken meldingen niet.</p>';
+  else if (!pushSupported()) body = `${what}<p class="hint">Deze browser kan geen meldingen ontvangen. Installeer Ritmo op je telefoon via Chrome (App installeren) en zet ze daar aan.</p>`;
+  else if (pushOnHere()) body = `<p class="hint">${icon('check', 'icon-xs')} Meldingen staan aan op dit apparaat.</p>${what}<button class="btn btn-s btn-quiet" data-action="push-off" ${pushBusy ? 'disabled' : ''}>Meldingen uitzetten</button>`;
+  else if (pushDenied()) body = `${what}<p class="hint err">Meldingen voor Ritmo zijn geblokkeerd. Zet ze aan in Chrome: houd het app-icoon ingedrukt, kies App-info en dan Meldingen. Of tik in Chrome op het slotje naast het adres.</p>`;
+  else body = `${what}<button class="btn btn-s" data-action="push-on" ${pushBusy ? 'disabled' : ''}>${pushBusy ? 'Even geduld...' : 'Meldingen aanzetten'}</button>`;
+  return `<section><h3>Meldingen</h3>${body}</section>`;
+}
+
+on('push-on', async () => {
+  if (pushBusy) return;
+  pushBusy = true; refreshSheet();
+  try {
+    const r = await enablePush();
+    if (r === 'on') toast('Meldingen staan aan. Morgen rond 8 uur krijg je de eerste.');
+    else if (r === 'denied') toast('Meldingen zijn geblokkeerd. Zie de uitleg bij Meldingen.');
+    else if (r === 'unsupported') toast('Deze browser kan geen meldingen ontvangen.');
+  } catch (err) {
+    console.error('[ritmo] meldingen aanzetten', err);
+    toast('Meldingen aanzetten lukte niet. Probeer het later nog eens.');
+  } finally { pushBusy = false; refreshSheet(); }
+});
+on('push-off', async () => {
+  if (pushBusy) return;
+  pushBusy = true; refreshSheet();
+  try {
+    await disablePush();
+    toast('Meldingen staan uit op dit apparaat.');
+  } catch (err) {
+    console.error('[ritmo] meldingen uitzetten', err);
+    toast('Uitzetten lukte niet. Probeer het nog eens.');
+  } finally { pushBusy = false; refreshSheet(); }
+});
 
 on('settings', () => openSettings());
 

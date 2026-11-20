@@ -1,13 +1,13 @@
 // Firebase backend: Google sign-in and Cloud Firestore (with an offline cache for the gym).
 // Data lives under ritmo/{uid}: the profile, runs/{runId} and runs/{runId}/days/{yyyy-mm-dd}.
-import { firebaseConfig } from './config.js';
+import { firebaseConfig, FIREBASE_SDK, VAPID_KEY } from './config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fbSignOut,
 } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
 import {
   initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager,
-  doc, collection, onSnapshot, setDoc, getDocs,
+  doc, collection, onSnapshot, setDoc, getDocs, updateDoc, deleteField,
 } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js';
 
 const app = initializeApp(firebaseConfig);
@@ -56,6 +56,26 @@ export const backend = {
   },
   saveProfile(uid, patch) {
     return setDoc(userRef(uid), patch, { merge: true });
+  },
+
+  // Notifications: a token for this device from Firebase Cloud Messaging, and the day plan
+  // that the scheduled task in ritmo-meldingen reads. The plan replaces the old one whole.
+  async pushToken(serviceWorkerRegistration) {
+    const { getMessaging, getToken, isSupported } = await import(`${FIREBASE_SDK}/firebase-messaging.js`);
+    if (!(await isSupported())) return null;
+    return getToken(getMessaging(app), { vapidKey: VAPID_KEY, serviceWorkerRegistration });
+  },
+  async dropPushToken() {
+    const { getMessaging, deleteToken } = await import(`${FIREBASE_SDK}/firebase-messaging.js`);
+    return deleteToken(getMessaging(app));
+  },
+  savePushPlan(uid, { plan, state }) {
+    return setDoc(userRef(uid), { push: { plan, state } }, { mergeFields: ['push.plan', 'push.state'] });
+  },
+  removePushDevice(uid, id, stillOn) {
+    const patch = { 'push.on': !!stillOn };
+    if (id) patch[`push.devices.${id}`] = deleteField();
+    return updateDoc(userRef(uid), patch);
   },
 
   async createRun(uid, data) {

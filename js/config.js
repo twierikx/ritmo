@@ -10,3 +10,7 @@ export const firebaseConfig = {
 };
 
 export const FIREBASE_SDK = 'https://www.gstatic.com/firebasejs/13.3.0';
+
+// Public key of the Web Push certificate (Firebase, Cloud Messaging). Not a secret: the
+// private half stays with Google.
+export const VAPID_KEY = 'BMulAVHZSDoOek_6_oXEk0WroNN6MXqZWLFE7vsgoYLoNckTN8lVuekLBV9Sfd0pdvPHtcmBUlra9iJcyqDCv70';

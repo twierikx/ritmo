@@ -26,6 +26,10 @@ Zonder account uitproberen (met voorbeeldgegevens): https://twierikx.github.io/r
   sleutel daarna in het eigen, afgeschermde profiel.
 - **Opvlammingen** – één knop zet het schema een paar dagen op het opvlamplan en bouwt
   daarna rustig weer op.
+- **Meldingen** – aan te zetten bij Instellingen. Rond 8:00 (Madrid) wat er die dag op het
+  schema staat, rond 20:00 wat er nog openstaat of dat Ritmo nog niet is geopend. De app
+  zet een korte dagplanning in het eigen profiel; een geplande taak in de privé repository
+  `ritmo-meldingen` stuurt de meldingen via Firebase Cloud Messaging, zonder sleutels.
 - Werkt offline en is als app te installeren: open de site in Chrome op Android en kies
   "App installeren".
 
@@ -45,12 +49,14 @@ Firebase-project als Tómbola (`tombola-59330`, gratis Spark-plan).
 | `js/views/*.js` | de schermen (vandaag, sportschool, voortgang, theorie, instellingen) |
 | `js/backend-firebase.js` | Google-login en Firestore |
 | `js/backend-demo.js` | demo zonder account (`?demo`), opslag in de browser |
+| `js/push.js` | meldingen aan- en uitzetten, dagplanning voor de geplande taak |
 | `manifest.webmanifest`, `sw.js` | maken de site installeerbaar en offline bruikbaar |
 
 ### Gegevens
 
 ```
-ritmo/{uid}                          profiel: actief schema
+ritmo/{uid}                          profiel: actief schema, meldingen (push: telefoons
+                                     en dagplanning)
 ritmo/{uid}/runs/{runId}             één doorloop van een schema: startdatum, wandeldag,
                                      pauzeweken, testresultaten, opvlammingen, stickers
 ritmo/{uid}/runs/{runId}/days/{datum} alles wat op die dag is afgevinkt en gelogd

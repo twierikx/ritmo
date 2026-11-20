@@ -11,6 +11,7 @@ import { renderProgress } from './views/progress.js';
 import { renderTheory } from './views/theory.js';
 import { openWelcome, loadPrefs } from './views/settings.js';
 import { maybeAfterCheck } from './views/aftercheck.js';
+import { startPushSync } from './push.js';
 import './views/info.js';
 import './charts.js';
 import './timer.js';
@@ -188,6 +189,7 @@ function ready() {
   render();
   if (welcomePending) { welcomePending = false; openWelcome(); }
   setTimeout(() => checkStickers(true), 600);
+  startPushSync();
 }
 
 function onUser(user) {
