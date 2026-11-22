@@ -1,6 +1,6 @@
 // Service worker: makes Ritmo installable and lets it open without a connection.
 // Network first, so a new version is picked up right away; the cache is the fallback.
-const CACHE = 'ritmo-v5';
+const CACHE = 'ritmo-v6';
 const SHELL = [
   './', 'index.html', 'css/style.css', 'manifest.webmanifest', 'assets/icon.svg', 'assets/icon-192.png', 'assets/badge-96.png',
   'js/app.js', 'js/store.js', 'js/engine.js', 'js/ui.js', 'js/icons.js', 'js/md.js', 'js/timer.js', 'js/stickers.js', 'js/charts.js',

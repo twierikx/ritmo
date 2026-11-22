@@ -25,7 +25,7 @@ function seed() {
   const run = { id: runId, programId: program.id, start, hikeDay: 'sun', createdAt: Date.now(), stickersSeen: [],
     tests: { start: { soren: 62, flex: 105, sideL: 48, sideR: 41, gymAt: Date.now(), stand: 25, walk: 45, rHike: 4, rDance: 6, rStand: 3, pain: 3, homeAt: Date.now() } } };
   const days = {};
-  const kg = { hipthrust: 50, revhyper: 3, stepup: 8, abdCable: 5, latpull: 30, pushup: 0, chop: 10, suitcase: 16, treadmill: 0,
+  const kg = { hipthrust: 50, revhyper: 3, kickback: 5, stepup: 8, abdCable: 5, latpull: 30, pushup: 0, chop: 10, suitcase: 16, treadmill: 0,
     rdl: 35, backext: 10, bss: 8, copen1: 0, row: 30, pallof: 10, soren: 5 };
   const gymLog = (letter, week) => {
     const s = program.session(letter, week);

@@ -109,6 +109,12 @@ const EX = {
     why: 'Traint rugstrekkers en billen vanaf de andere kant, met weinig druk op je rug.',
     adjust: '3 × 12 makkelijk? Zwaardere enkelgewichten.',
   },
+  kickback: {
+    name: 'Heupextensie aan de kabel (kickback)', es: 'patada de glúteo en polea', measure: 'reps', load: true, rest: 60, step: 1,
+    how: 'Kabel laag, enkelband om je enkel. Sta met je gezicht naar het station en houd je vast. Til je gestrekte been naar achteren, zonder je onderrug hol te maken of je bovenlijf naar voren te kantelen. Knijp bovenin je bil samen en laat rustig terugkomen. Geen kabel? Op je buik op een bank met een lichte dumbbell tussen je voeten, of met een bandlus om je enkels.',
+    why: 'Traint je bilspieren vanaf de achterkant, met weinig druk op je rug.',
+    adjust: '3 × 12 per been makkelijk? Een stap zwaarder.',
+  },
   lowerback: {
     name: 'Lowerbackmachine', es: 'máquina de lumbares', measure: 'reps', load: true, rest: 120, step: 2.5,
     how: 'Stel de machine zo in dat je heupen vast zitten en alleen je rug beweegt. Rustig buigen en strekken, tot bijna falen.',
@@ -280,7 +286,7 @@ const SESSIONS = {
     title: 'Sportschool B', sub: 'Heupen en hikevoorbereiding',
     1: [
       { ex: 'hipthrust', sets: 3, reps: [8, 12] },
-      { ex: 'revhyper', sets: 3, reps: [12, 12] },
+      { ex: 'kickback', sets: 3, reps: [12, 12], side: 'per been' },
       { ex: 'stepup', sets: 3, reps: [8, 8], side: 'per been' },
       { ex: 'abdCable', sets: 3, reps: [10, 12], side: 'per kant', note: 'Rechts 1 set extra' },
       { ex: 'latpull', sets: 3, reps: [6, 10] },
