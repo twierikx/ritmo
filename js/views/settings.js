@@ -182,7 +182,7 @@ on('export-json', () => {
   download(`ritmo-${todayStr()}.json`, JSON.stringify({ run: state.run, days: state.days }, null, 2), 'application/json');
 });
 on('export-csv', () => {
-  const rows = [['datum', 'training', 'oefening', 'set', 'kg', 'herhalingen/seconden', 'gedaan', 'pijn', 'notitie']];
+  const rows = [['datum', 'training', 'oefening', 'variant', 'set', 'kg', 'hoogte handen (cm)', 'band', 'herhalingen/seconden', 'gedaan', 'pijn', 'notitie']];
   for (const date of Object.keys(state.days).sort()) {
     const g = state.days[date].gym;
     if (!g || !g.ex) continue;
@@ -190,7 +190,7 @@ on('export-csv', () => {
       const name = (state.program.exercises[id] || {}).name || id;
       const pain = { g: 'groen', o: 'oranje', r: 'rood' }[e.pain] || '';
       const num = (v) => (v == null || v === '' ? '' : String(v).replace('.', ','));
-      (e.sets || []).forEach((s, i) => rows.push([date, g.s, name, i + 1, num(s && s.kg), num(s && s.r), s && s.ok ? 'ja' : 'nee', pain, (e.note || '').replace(/\n/g, ' ')]));
+      (e.sets || []).forEach((s, i) => rows.push([date, g.s, name, e.v || '', i + 1, num(s && s.kg), num(s && s.h), (s && s.b) || '', num(s && s.r), s && s.ok ? 'ja' : 'nee', pain, (e.note || '').replace(/\n/g, ' ')]));
     }
   }
   // A byte order mark so Excel opens the accents correctly.

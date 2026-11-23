@@ -32,7 +32,8 @@ function seed() {
     const ex = {};
     for (const e of s.exercises) {
       const top = e.reps ? e.reps[1] : 8;
-      ex[e.id] = { sets: Array.from({ length: e.sets }, (_, i) => ({ kg: e.load ? kg[e.id] ?? null : null, r: e.measure === 'sec' ? top - 5 : Math.max(1, top - (i === e.sets - 1 ? 1 : 0)), ok: true })), pain: 'g' };
+      const f = e.variants ? (e.variants.find((x) => x.id === e.variant) || e.variants[0]).field : e.field || (e.load ? 'kg' : null);
+      ex[e.id] = { sets: Array.from({ length: e.sets }, (_, i) => ({ kg: f === 'kg' ? kg[e.id] ?? null : null, ...(f === 'height' ? { h: 50 } : {}), ...(f === 'band' ? { b: 'rood' } : {}), r: e.measure === 'sec' ? top - 5 : Math.max(1, top - (i === e.sets - 1 ? 1 : 0)), ok: true })), pain: 'g' };
     }
     return { s: letter, week, ex, done: true, at: Date.now() };
   };

@@ -4,7 +4,7 @@ import { longDate, todayStr, addDays, mondayOf, weekDates, parseNum, fmtNum, wor
 import { icon } from '../icons.js';
 import { esc, on, onChange, openSheet, closeSheet, toast, confirmSheet, buzz, beep } from '../ui.js';
 import { startTimer, itemSegments } from '../timer.js';
-import { exerciseHistory, setsSummary } from './info.js';
+import { exerciseHistory, setsSummary, BANDS, bandLabel, legacyVariant } from './info.js';
 import { afterRow } from './today.js';
 
 const UNIT = { reps: 'herh.', sec: 's', m: 'm', min: 'min' };
@@ -17,7 +17,7 @@ function context() {
   const doc = state.days[date] || {};
   const gymTask = p.tasks.find((t) => t.kind === 'gym');
   const g = doc.gym || null;
-  const hasData = !!(g && g.s && Object.values(g.ex || {}).some((e) => (e.sets || []).some((x) => x && (x.ok || x.kg != null || x.r != null))));
+  const hasData = !!(g && g.s && Object.values(g.ex || {}).some((e) => (e.sets || []).some((x) => x && (x.ok || x.kg != null || x.r != null || x.h != null || x.b))));
   let letter = (hasData && g.s) || state.gymSession || (gymTask && gymTask.session) || nextLetter(date);
   const flare = gymTask && gymTask.session === letter ? !!gymTask.flare : !!(g && g.flare && g.s === letter);
   let week = p.effWeek || p.info.week;
@@ -42,17 +42,56 @@ function lastWeekBefore(date) {
   return 1;
 }
 
-/** What to try this time, from the last log of this exercise. */
-function suggestion(e, hist, light) {
+const cleanSet = (x) => ({ kg: x.kg ?? null, r: x.r ?? null, ok: !!x.ok, ...(x.h != null ? { h: x.h } : {}), ...(x.b ? { b: x.b } : {}) });
+const nums = (sets, k) => sets.filter((s) => s[k] != null && s[k] !== '').map((s) => Number(s[k])).filter((n) => Number.isFinite(n));
+
+/** Which variant of an exercise is chosen: the one saved in the log, else the one the schedule names. */
+function variantOf(e, log) {
+  return e.variants ? ((log && log.v) || e.variant || e.variants[0].id) : null;
+}
+/** What a set asks for next to the repetitions: kilos, the height of your hands, or a band. */
+function fieldOf(e, v) {
+  if (e.variants) return (e.variants.find((x) => x.id === v) || e.variants[0]).field;
+  return e.field || (e.load ? 'kg' : null);
+}
+
+/** What to try this time, from the last log of this exercise (of the same variant). */
+function suggestion(e, hist, light, field) {
   const last = hist[0];
   if (!last) return { kg: null, text: e.kgHint ? `Start met ${e.kgHint}` : '' };
   const base = light ? last : (hist.find((h) => !h.light) || last);
-  const kgs = base.sets.map((s) => Number(s.kg)).filter((n) => n > 0);
-  const lastKg = kgs.length ? Math.max(...kgs) : null;
   const top = e.reps ? e.reps[1] : null;
   const allTop = top != null && base.sets.length >= Math.max(1, e.sets - (base.light ? 1 : 0)) && base.sets.every((s) => Number(s.r) >= top);
+  const calm = worstPain(base.pain, base.after) !== 'r' && base.after !== 'o';
+  const red = base.pain === 'r' ? 'Vorige keer rood' : 'Ochtend erna erger';
+  const worse = base.pain === 'r' || base.after === 'r';
+  if (field === 'height') {
+    const hs = nums(base.sets, 'h');
+    if (!hs.length) return { text: '' };
+    const lastH = Math.min(...hs);
+    if (light) return { h: lastH, dir: 'same', text: `Lichte week: ${lastH} cm` };
+    if (worse) { const h = lastH + 10; return { h, dir: 'down', text: `${red}: ${h} cm` }; }
+    if (base.after === 'o') return { h: lastH, dir: 'same', text: `Zelfde hoogte, ochtend erna oranje: ${lastH} cm` };
+    if (allTop && calm) {
+      if (lastH <= 0) return { h: 0, dir: 'up', text: 'Bovenkant gehaald op de vloer: voeten hoger' };
+      const h = Math.max(0, lastH - 10);
+      return { h, dir: 'up', text: `Probeer ${h} cm` };
+    }
+    return { h: lastH, dir: 'same', text: `Zelfde hoogte: ${lastH} cm` };
+  }
+  if (field === 'band') {
+    const bs = base.sets.map((s) => s.b).filter(Boolean);
+    if (!bs.length) return { text: '' };
+    const lastB = bs[bs.length - 1];
+    if (light || base.after === 'o') return { band: lastB, dir: 'same', text: `Zelfde band: ${bandLabel(lastB).toLowerCase()}` };
+    if (worse) return { band: lastB, dir: 'down', text: `${red}: neem een dikkere band` };
+    if (allTop && calm) return { band: lastB, dir: 'up', text: lastB === 'geen' ? 'Bovenkant gehaald zonder band: maak het zwaarder' : 'Bovenkant gehaald: een dunnere band of geen band' };
+    return { band: lastB, dir: 'same', text: `Zelfde band: ${bandLabel(lastB).toLowerCase()}` };
+  }
+  const kgs = base.sets.map((s) => Number(s.kg)).filter((n) => n > 0);
+  const lastKg = kgs.length ? Math.max(...kgs) : null;
   if (!e.load || lastKg == null) {
-    if (allTop && worstPain(base.pain, base.after) !== 'r' && base.after !== 'o') return { kg: null, dir: 'up', text: e.measure === 'sec' ? 'Bovenkant gehaald: een zwaardere variant mag' : 'Bovenkant gehaald: maak het iets zwaarder' };
+    if (allTop && calm) return { kg: null, dir: 'up', text: e.measure === 'sec' ? 'Bovenkant gehaald: een zwaardere variant mag' : 'Bovenkant gehaald: maak het iets zwaarder' };
     return { kg: null, text: '' };
   }
   if (light) { const kg = round05(lastKg * 0.9); return { kg, dir: 'down', text: `Lichte week: ${fmtNum(kg)} kg` }; }
@@ -107,12 +146,31 @@ export function renderGym() {
     </div>`;
 }
 
+/** The first input of a set row: kilos, the height of your hands or the band you used. */
+function valueField(field, e, i, s, sug) {
+  const at = `data-change="set-val" data-ex="${e.id}" data-i="${i}"`;
+  if (field === 'kg') {
+    return `<label class="setfield"><input class="input num" type="number" inputmode="decimal" step="0.5" min="0" value="${s.kg ?? ''}" placeholder="${sug.kg != null ? fmtNum(sug.kg).replace(',', '.') : ''}" ${at} data-k="kg" aria-label="Gewicht, set ${i + 1}"><span class="unit">kg</span></label><span class="times" aria-hidden="true">×</span>`;
+  }
+  if (field === 'height') {
+    return `<label class="setfield"><input class="input num" type="number" inputmode="numeric" step="1" min="0" value="${s.h ?? ''}" placeholder="${sug.h != null ? sug.h : ''}" ${at} data-k="h" aria-label="Hoogte van je handen in cm, set ${i + 1}"><span class="unit">cm</span></label><span class="times" aria-hidden="true">×</span>`;
+  }
+  if (field === 'band') {
+    const cur = s.b || '';
+    return `<label class="setfield"><select class="select band" ${at} data-k="b" data-sug="${sug.band || ''}" aria-label="Band, set ${i + 1}"><option value=""${cur ? '' : ' selected'}>${sug.band ? esc(bandLabel(sug.band)) : 'Band'}</option>${BANDS.map(([id, label]) => `<option value="${id}"${cur === id ? ' selected' : ''}>${esc(label)}</option>`).join('')}</select></label><span class="times" aria-hidden="true">×</span>`;
+  }
+  return '';
+}
+
 function exCard(e, idx, c) {
   const log = (c.g && c.g.ex && c.g.ex[e.id]) || {};
   const sets = log.sets || [];
   const rows = Math.max(e.sets, sets.length);
-  const hist = exerciseHistory(e.id, c.date);
-  const sug = suggestion(e, hist, c.light);
+  const v = variantOf(e, log);
+  const field = fieldOf(e, v);
+  const hist0 = exerciseHistory(e.id, c.date);
+  const hist = e.variants ? hist0.filter((h) => (h.v || legacyVariant(e)) === v) : hist0;
+  const sug = suggestion(e, hist, c.light, field);
   const last = hist[0];
   const top = e.reps ? e.reps[1] : '';
   const okCount = sets.filter((s) => s && s.ok).length;
@@ -122,8 +180,8 @@ function exCard(e, idx, c) {
     const ok = !!s.ok;
     return `<div class="set ${ok ? 'is-ok' : ''}">
       <span class="set-n" aria-hidden="true">${i + 1}</span>
-      ${e.load ? `<label class="setfield"><input class="input num" type="number" inputmode="decimal" step="0.5" min="0" value="${s.kg ?? ''}" placeholder="${sug.kg != null ? fmtNum(sug.kg).replace(',', '.') : ''}" data-change="set-val" data-ex="${e.id}" data-i="${i}" data-k="kg" aria-label="Gewicht, set ${i + 1}"><span class="unit">kg</span></label><span class="times" aria-hidden="true">×</span>` : ''}
-      <label class="setfield"><input class="input num" type="number" inputmode="numeric" min="0" value="${s.r ?? ''}" placeholder="${top}" data-change="set-val" data-ex="${e.id}" data-i="${i}" data-k="r" aria-label="${UNIT_LABEL[e.measure]}, set ${i + 1}">${e.load && e.measure === 'reps' ? '' : `<span class="unit">${UNIT[e.measure]}</span>`}</label>
+      ${valueField(field, e, i, s, sug)}
+      <label class="setfield"><input class="input num" type="number" inputmode="numeric" min="0" value="${s.r ?? ''}" placeholder="${top}" data-change="set-val" data-ex="${e.id}" data-i="${i}" data-k="r" aria-label="${UNIT_LABEL[e.measure]}, set ${i + 1}">${field && e.measure === 'reps' ? '' : `<span class="unit">${UNIT[e.measure]}</span>`}</label>
       ${e.measure === 'sec' ? `<button class="iconbtn" data-action="set-hold" data-ex="${e.id}" data-i="${i}" aria-label="Stopwatch voor set ${i + 1}">${icon('timer')}</button>` : ''}
       <button class="tick tick-s" data-action="set-ok" data-ex="${e.id}" data-i="${i}" aria-pressed="${ok}" aria-label="Set ${i + 1} ${ok ? 'gedaan' : 'afvinken'}">${icon('check')}</button>
     </div>`;
@@ -133,11 +191,13 @@ function exCard(e, idx, c) {
       <span class="ex-n">${idx + 1}</span>
       <div class="ex-title">
         <h3>${esc(e.name)}</h3>
+        ${e.opt ? '<p class="opt-line">Als je tijd hebt</p>' : ''}
         <p class="ex-target">${esc(e.target)}</p>
         ${e.note ? `<p class="ex-note">${esc(e.note)}</p>` : ''}
       </div>
       <button class="iconbtn" data-action="info" data-key="ex:${e.id}" aria-label="Uitleg bij ${esc(e.name)}">${icon('info')}</button>
     </header>
+    ${e.variants ? `<div class="ex-variant"><div class="seg seg-s" role="group" aria-label="Kies wat je doet">${e.variants.map((x) => `<button class="${x.id === v ? 'is-on' : ''}" data-action="ex-variant" data-ex="${e.id}" data-v="${x.id}" aria-pressed="${x.id === v}">${esc(x.label)}</button>`).join('')}</div></div>` : ''}
     ${last || sug.text ? `<p class="ex-last">${last ? `Vorige keer: ${esc(setsSummary(last.sets, e.measure))}` : ''}${sug.text ? ` <span class="sugg ${sug.dir ? `d-${sug.dir}` : ''}">${esc(sug.text)}</span>` : ''}</p>` : ''}
     <div class="sets">${setRows}</div>
     <div class="ex-foot">
@@ -275,8 +335,8 @@ onChange('set-val', (el) => {
   const { ex, k } = el.dataset; const i = Number(el.dataset.i);
   const sets = setsOf(c, ex);
   while (sets.length <= i) sets.push({});
-  sets[i][k] = parseNum(el.value);
-  saveSets(c, ex, sets.map((s) => ({ kg: s.kg ?? null, r: s.r ?? null, ok: !!s.ok })));
+  sets[i][k] = k === 'b' ? (el.value || null) : parseNum(el.value);
+  saveSets(c, ex, sets.map(cleanSet));
 });
 
 on('set-ok', (el) => {
@@ -288,15 +348,15 @@ on('set-ok', (el) => {
   const row = el.closest('.set');
   const s = sets[i];
   if (!s.ok) {
-    const inputs = row.querySelectorAll('input');
-    inputs.forEach((inp) => {
+    row.querySelectorAll('[data-k]').forEach((inp) => {
       const k = inp.dataset.k;
+      if (k === 'b') { if (!s.b) s.b = inp.value || inp.dataset.sug || null; return; }
       const v = parseNum(inp.value) ?? parseNum(inp.placeholder);
       if (s[k] == null && v != null) s[k] = v;
     });
     s.ok = true;
   } else s.ok = false;
-  saveSets(c, ex, sets.map((x) => ({ kg: x.kg ?? null, r: x.r ?? null, ok: !!x.ok })));
+  saveSets(c, ex, sets.map(cleanSet));
   if (s.ok) {
     buzz(20);
     const allDone = sets.filter((x) => x.ok).length >= e.sets;
@@ -319,7 +379,7 @@ on('set-hold', (el) => {
       while (sets.length <= i) sets.push({});
       sets[i].r = res.elapsed;
       sets[i].ok = true;
-      saveSets(c2, ex, sets.map((x) => ({ kg: x.kg ?? null, r: x.r ?? null, ok: !!x.ok })));
+      saveSets(c2, ex, sets.map(cleanSet));
     },
   });
 });
@@ -331,14 +391,19 @@ on('set-add', (el) => {
   const sets = setsOf(c, ex);
   while (sets.length < e.sets) sets.push({});
   const prev = sets[sets.length - 1] || {};
-  sets.push({ kg: prev.kg ?? null, r: null, ok: false });
-  saveSets(c, ex, sets.map((x) => ({ kg: x.kg ?? null, r: x.r ?? null, ok: !!x.ok })));
+  sets.push({ kg: prev.kg ?? null, h: prev.h ?? null, b: prev.b ?? null, r: null, ok: false });
+  saveSets(c, ex, sets.map(cleanSet));
 });
 on('set-remove', (el) => {
   const c = context();
   const sets = setsOf(c, el.dataset.ex);
   sets.pop();
-  saveSets(c, el.dataset.ex, sets.map((x) => ({ kg: x.kg ?? null, r: x.r ?? null, ok: !!x.ok })));
+  saveSets(c, el.dataset.ex, sets.map(cleanSet));
+});
+
+on('ex-variant', (el) => {
+  const c = context();
+  patchDay(c.date, { gym: { ...base(c), ex: { [el.dataset.ex]: { v: el.dataset.v } } } });
 });
 
 on('ex-pain', (el) => {
