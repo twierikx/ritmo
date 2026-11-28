@@ -435,8 +435,8 @@ function homeItems(phase, week = 1) {
       cue: 'Op je rug, onderbenen op een stoel. Traag in door je neus, lang uit.' },
     { id: 'roller', name: 'Bovenrug strekken over een foamroller', target: '2 × 8', info: 'roller',
       cue: 'Roller dwars onder je schouderbladen, handen achter je hoofd. Strek over de roller, je onderrug blijft rustig.' },
-    { id: 'openbook', name: 'Open book', target: '8 per kant, rustig', info: 'openbook',
-      cue: 'Op je zij, knieën gebogen en op elkaar. Draai je bovenste arm open naar de grond achter je en kijk mee.' },
+    { id: 'openbook', name: 'Open book half-knielend', target: '8 per kant, rustig', info: 'openbook',
+      cue: 'Eén knie op de grond, handen achter je hoofd. Knijp de bil van je knielende been aan en draai je borst open naar je voorste been.' },
     { id: 'rotatie', name: 'Externe rotatie in zijlig', target: '2 × 12–15 per kant, 1–2 kg', info: 'rotatie',
       cue: 'Opgerolde handdoek tussen je elleboog en je zij. Draai je onderarm omhoog, schouder laag.' },
     { id: 'borst', name: 'Borstspier rekken in een deuropening', target: '2 × 30 s per kant', info: 'borst',
@@ -808,7 +808,7 @@ Bleef stap 1 twee keer oranje of rood? Doe dezelfde intervallen dan op de crosst
   home: { title: 'Thuisroutine', md: `Ongeveer 20 minuten voor wat in de sportschool niet aan bod komt: je voeten, je bovenrug en je schouders.
 
 - **Voeten:** korte voet, tenen spreiden en op één been staan. Ze trainen de kleine spieren die je voetboog dragen, zodat je enkel minder naar binnen zakt.
-- **Bovenrug:** strekken over een foamroller en het open book, zodat buigen en draaien meer uit je bovenrug komen dan uit je onderrug.
+- **Bovenrug:** strekken over een foamroller en de draai half-knielend, zodat buigen en draaien meer uit je bovenrug komen dan uit je onderrug.
 - **Schouders:** externe rotatie en rekken in een deuropening, tegen schouders die van bureauwerk naar binnen draaien.
 
 Je heupen, je zijkant en je rugstrekkers train je al in training A en B, en vlak voor het dansen. Reken vooral op winst voor je dansen en je houding. Of het je rugpijn vermindert, is minder zeker. Meer uitleg staat bij Theorie.
@@ -897,11 +897,13 @@ Dit is het pijnmonitoringmodel uit je plan (Thomeé 1997).` },
 **Geen foamroller?** Plak twee tennisballen met tape aan elkaar en leg ze links en rechts van je wervelkolom. Een stevig opgerolde handdoek kan ook.
 
 **In het Spaans:** *extensión torácica con foam roller*` },
-  openbook: { title: 'Open book', md: `**Hoe:** lig op je zij met je knieën gebogen en op elkaar, een kussen onder je hoofd en je armen gestrekt voor je. Draai je bovenste arm in een boog open naar de grond achter je, kijk je hand na en adem uit. Je knieën blijven op elkaar. Rustig terug: 8 per kant.
+  openbook: { title: 'Open book half-knielend', md: `**Hoe:** zet één knie op de grond (op een kussen of opgevouwen handdoek) en je andere voet voor je, beide knieën ongeveer in 90 graden. Knijp de bil van je knielende been aan, zodat je onderrug niet hol gaat. Handen achter je hoofd. Draai je borst en ellebogen open naar de kant van je voorste been, kijk mee en adem uit. Rustig terug: 8 per kant.
 
-**Waarom:** je leert draaien vanuit je bovenrug, zodat je onderrug minder hoeft mee te draaien. Handig voor body rolls en draaien in het dansen.
+**Meer voelen:** houd bij elke herhaling 3 tot 5 ademhalingen vast en ga bij elke uitademing iets verder. Voel je weinig in je bovenrug, dan draait je bekken waarschijnlijk mee: knijp je bil harder aan en houd je heupen recht naar voren.
 
-**In het Spaans:** *libro abierto (rotación torácica)*` },
+**Waarom:** je leert draaien vanuit je bovenrug, zodat je onderrug minder hoeft mee te draaien. Half-knielend moet je zelf je bekken stil houden, en dat geeft meestal een diepere draaiing dan liggend. Handig voor body rolls en draaien in het dansen.
+
+**In het Spaans:** *rotación torácica en media rodilla*` },
   rotatie: { title: 'Externe rotatie in zijlig', md: `**Hoe:** lig op je zij met een opgerolde handdoek tussen je bovenste elleboog en je zij, elleboog in 90 graden. Draai je onderarm met het gewicht omhoog, zover als je schouder laag en naar achteren blijft. 2 tellen omhoog, 3 tellen omlaag: 2 × 12 tot 15 per kant.
 
 **Waarom:** traint de spieren achter in je schouder die je arm naar buiten draaien, als tegenwicht voor schouders die naar binnen draaien. In zijlig werken die spieren het hardst.
